@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'dummy_data.dart';
+import 'network.dart';
+import 'prefectures.dart';
 
 class PrefecturesScreen extends StatefulWidget {
   @override
@@ -8,14 +9,19 @@ class PrefecturesScreen extends StatefulWidget {
 }
 
 class _PrefecturesScreenState extends State<PrefecturesScreen> {
-  int selectedCount = prefectures[0]['count'];
+  final Covid19APIClient _client = Covid19APIClient();
+  Future<List<Prefecture>> _prefectures;
+  String _countText = '-';
+  List<Text> _prefectureNames;
 
-  List<Text> getPrefectureNames() {
-    List<Text> prefectureNames = [];
-    for (Map<String, dynamic> pref in prefectures) {
-      prefectureNames.add(Text(pref['name']));
-    }
-    return prefectureNames;
+  @override
+  void initState() {
+    super.initState();
+    getPrefectures();
+  }
+
+  void getPrefectures() {
+    _prefectures = _client.getAll('20210328');
   }
 
   @override
@@ -47,30 +53,60 @@ class _PrefecturesScreenState extends State<PrefecturesScreen> {
                   color: Colors.grey,
                 ),
               ),
-              Expanded(
-                child: Text(
-                  selectedCount.toString() + '人',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 50.0,
-                    color: Colors.grey[700],
-                  ),
-                ),
-              ),
-              Container(
-                height: size.height * .20,
-                padding: EdgeInsets.only(bottom: 30.0),
-                color: Colors.grey[300],
-                child: CupertinoPicker(
-                  backgroundColor: Colors.grey[300],
-                  itemExtent: 32.0,
-                  onSelectedItemChanged: (selectedIndex) {
-                    setState(() {
-                      selectedCount = prefectures[selectedIndex]['count'];
-                    });
-                  },
-                  children: getPrefectureNames(),
-                ),
+              FutureBuilder<List<Prefecture>>(
+                future: _prefectures,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    if (snapshot.hasData) {
+                      List<Text> names = [Text('')];
+                      for (Prefecture pref in snapshot.data) {
+                        names.add(Text(pref.name));
+                        _prefectureNames = names;
+                      }
+
+                      return Expanded(
+                        child: Column(
+                          children: <Widget>[
+                            Expanded(
+                              child: Text(
+                                _countText + '人',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 50.0,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                            ),
+                            Container(
+                              height: size.height * .20,
+                              padding: EdgeInsets.only(bottom: 30.0),
+                              color: Colors.grey[300],
+                              child: CupertinoPicker(
+                                backgroundColor: Colors.grey[300],
+                                itemExtent: 32.0,
+                                onSelectedItemChanged: (index) {
+                                  setState(() {
+                                    if (index == 0) {
+                                      _countText = '-';
+                                      return;
+                                    }
+                                    int count = snapshot.data[index - 1].count;
+                                    _countText = count.toString();
+                                  });
+                                },
+                                children: _prefectureNames,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    } else if (snapshot.hasError) {
+                      return Text("future builder error");
+                    }
+                  }
+
+                  return CircularProgressIndicator();
+                },
               ),
             ],
           ),
