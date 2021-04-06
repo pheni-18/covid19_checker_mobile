@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'network.dart';
 import 'prefectures.dart';
+import 'package:intl/intl.dart';
 
 class PrefecturesScreen extends StatefulWidget {
   @override
@@ -13,15 +14,50 @@ class _PrefecturesScreenState extends State<PrefecturesScreen> {
   Future<List<Prefecture>> _prefectures;
   String _countText = '-';
   List<Text> _prefectureNames;
+  DateTime _selectedDate = DateTime.now();
 
   @override
   void initState() {
     super.initState();
-    getPrefectures();
+    _getPrefectures(DateFormat('yyyyMMdd').format(_selectedDate));
   }
 
-  void getPrefectures() {
-    _prefectures = _client.getAll('20210328');
+  void _getPrefectures(String date) {
+    _prefectures = _client.getAll(date);
+  }
+
+  void _showDatePicker(BuildContext context, double height) {
+    DateTime _date;
+    showCupertinoModalPopup(
+      context: context,
+      builder: (_) => Container(
+        height: height * 1.5,
+        color: Color.fromARGB(255, 255, 255, 255),
+        child: Column(
+          children: [
+            Container(
+              height: height,
+              child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.date,
+                  initialDateTime: _selectedDate,
+                  onDateTimeChanged: (value) {
+                    _date = value;
+                  }),
+            ),
+            CupertinoButton(
+              child: Text('OK'),
+              onPressed: () {
+                setState(() {
+                  _selectedDate = _date;
+                });
+                _getPrefectures(DateFormat('yyyyMMdd').format(_selectedDate));
+                Navigator.of(context).pop();
+              },
+            )
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -36,12 +72,15 @@ class _PrefecturesScreenState extends State<PrefecturesScreen> {
         child: Center(
           child: Column(
             children: <Widget>[
-              Text(
-                '2021年3月28日',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 30.0,
-                  color: Colors.grey,
+              FlatButton(
+                onPressed: () => _showDatePicker(context, size.height * .20),
+                child: Text(
+                  DateFormat('yyyy年MM月dd日').format(_selectedDate),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 30.0,
+                    color: Colors.grey,
+                  ),
                 ),
               ),
               SizedBox(height: 50.0),
@@ -58,6 +97,18 @@ class _PrefecturesScreenState extends State<PrefecturesScreen> {
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.done) {
                     if (snapshot.hasData) {
+                      if (snapshot.data.length == 0) {
+                        return Text(
+                          '指定された日付のデータは\nありませんでした。\n別の日付を選択してください。',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20.0,
+                            color: Colors.red[500],
+                          ),
+                          textAlign: TextAlign.center,
+                        );
+                      }
+
                       List<Text> names = [Text('')];
                       for (Prefecture pref in snapshot.data) {
                         names.add(Text(pref.name));
