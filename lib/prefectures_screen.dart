@@ -49,6 +49,7 @@ class _PrefecturesScreenState extends State<PrefecturesScreen> {
               onPressed: () {
                 setState(() {
                   _selectedDate = _date;
+                  _countText = '-';
                 });
                 _getPrefectures(DateFormat('yyyyMMdd').format(_selectedDate));
                 Navigator.of(context).pop();
@@ -109,11 +110,13 @@ class _PrefecturesScreenState extends State<PrefecturesScreen> {
                         );
                       }
 
-                      List<Text> names = [Text('')];
+                      List<Text> names = [Text(''), Text('全国')];
+                      int nationalCount = 0;
                       for (Prefecture pref in snapshot.data) {
                         names.add(Text(pref.name));
-                        _prefectureNames = names;
+                        nationalCount += pref.count;
                       }
+                      _prefectureNames = names;
 
                       return Expanded(
                         child: Column(
@@ -141,7 +144,11 @@ class _PrefecturesScreenState extends State<PrefecturesScreen> {
                                       _countText = '-';
                                       return;
                                     }
-                                    int count = snapshot.data[index - 1].count;
+                                    if (index == 1) {
+                                      _countText = nationalCount.toString();
+                                      return;
+                                    }
+                                    int count = snapshot.data[index - 2].count;
                                     _countText = count.toString();
                                   });
                                 },
