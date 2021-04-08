@@ -47,6 +47,10 @@ class _PrefecturesScreenState extends State<PrefecturesScreen> {
             CupertinoButton(
               child: Text('OK'),
               onPressed: () {
+                if (_date == null) {
+                  Navigator.of(context).pop();
+                  return;
+                }
                 setState(() {
                   _selectedDate = _date;
                   _countText = '-';
