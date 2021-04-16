@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:http/http.dart' as http;
 import 'network.dart';
 import 'prefectures.dart';
 import 'package:intl/intl.dart';
@@ -10,7 +11,7 @@ class PrefecturesScreen extends StatefulWidget {
 }
 
 class _PrefecturesScreenState extends State<PrefecturesScreen> {
-  final Covid19APIClient _client = Covid19APIClient();
+  final Covid19APIClient _client = Covid19APIClient(http.Client());
   Future<List<Prefecture>> _prefectures;
   String _countText = '-';
   List<Text> _prefectureNames;
